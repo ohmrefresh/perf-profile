@@ -1,0 +1,75 @@
+{
+  "name": "prometheus-mcp",
+  "version": "1.0.0",
+  "transport": "stdio",
+  "server": {
+    "command": "node",
+    "args": ["src/mcp/prometheus-mcp-server.js"],
+    "env": {
+      "PROMETHEUS_URL": "${PROMETHEUS_URL}",
+      "PROMETHEUS_TIMEOUT_MS": "10000"
+    }
+  },
+  "tools": {
+    "query_range": {
+      "description": "Execute a Prometheus range query and return time-series matrix",
+      "inputSchema": {
+        "type": "object",
+        "required": ["query", "start", "end", "step"],
+        "properties": {
+          "query": { "type": "string", "description": "PromQL expression" },
+          "start": { "type": "string", "description": "Start time (unix timestamp or relative)" },
+          "end":   { "type": "string", "description": "End time (unix timestamp or 'now')" },
+          "step":  { "type": "string", "description": "Step duration e.g. 60s, 288s" }
+        }
+      }
+    },
+    "instant_query": {
+      "description": "Execute a Prometheus instant query and return a vector",
+      "inputSchema": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "description": "PromQL expression" },
+          "time":  { "type": "string", "description": "Evaluation time (default: now)" }
+        }
+      }
+    },
+    "label_values": {
+      "description": "Return all values for a given label (e.g. list all uri values)",
+      "inputSchema": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "label":  { "type": "string", "description": "Label name e.g. uri" },
+          "match":  { "type": "string", "description": "Optional series selector e.g. {app_name='payment-api'}" }
+        }
+      }
+    },
+    "series_metadata": {
+      "description": "Return metric names and label sets matching a selector",
+      "inputSchema": {
+        "type": "object",
+        "required": ["match"],
+        "properties": {
+          "match": { "type": "string", "description": "Series selector e.g. {app_name='payment-api'}" }
+        }
+      }
+    }
+  },
+  "concurrency": {
+    "max_parallel_calls": 4,
+    "queue_strategy": "fifo",
+    "timeout_ms": 30000
+  },
+  "slo": {
+    "p95_ms": 200,
+    "p99_ms": 500
+  },
+  "thresholds": {
+    "error_pct": {
+      "ok":   1.0,
+      "warn": 5.0
+    }
+  }
+}

@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+
+  # ── Prometheus MCP server ────────────────────────────────────────────────────
+  prometheus-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: prometheus-mcp:latest
+    container_name: prometheus-mcp
+    restart: unless-stopped
+    ports:
+      - "3000:3000"         # SSE/HTTP transport for Copilot
+    environment:
+      PROMETHEUS_URL:        http://prometheus:9090
+      PROMETHEUS_TIMEOUT_MS: "10000"
+      MCP_TRANSPORT:         sse
+      MCP_PORT:              "3000"
+      MCP_HOST:              "0.0.0.0"
+      MAX_CONCURRENT:        "4"
+      LOG_LEVEL:             info
+      NODE_ENV:              production
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mcp-net
+
+  # ── Prometheus (local dev / testing) ─────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - mcp-net
+
+  # ── Grafana (optional — useful for visual cross-check during dev) ─────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED:  "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - mcp-net
+    profiles:
+      - grafana          # opt-in: docker compose --profile grafana up
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  mcp-net:
+    driver: bridge

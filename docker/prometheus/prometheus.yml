@@ -1,0 +1,45 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    env_name: local
+
+scrape_configs:
+
+  # Prometheus self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Payment API (Spring Boot / Micrometer) — adjust host to match your local service
+  - job_name: payment-api
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    relabel_configs:
+      - target_label: app_name
+        replacement: payment-api
+      - target_label: env_name
+        replacement: local
+
+  # Transfer service
+  - job_name: transfer-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+    relabel_configs:
+      - target_label: app_name
+        replacement: transfer-service
+      - target_label: env_name
+        replacement: local
+
+  # Notification API
+  - job_name: notification-api
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+    relabel_configs:
+      - target_label: app_name
+        replacement: notification-api
+      - target_label: env_name
+        replacement: local

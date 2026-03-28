@@ -1,0 +1,22 @@
+{
+  "name": "perf-profile-mcp",
+  "version": "1.0.0",
+  "description": "Prometheus MCP server for @perf-profile Copilot agent",
+  "main": "src/mcp/prometheus-mcp-server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node src/mcp/prometheus-mcp-server.js",
+    "dev":   "ts-node src/mcp/prometheus-mcp-server.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/mcp-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node":    "^10.9.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

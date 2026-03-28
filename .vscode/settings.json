@@ -1,0 +1,28 @@
+{
+  "github.copilot.chat.agent.enabled": true,
+  "github.copilot.chat.mcp.enabled": true,
+  "mcp": {
+    "servers": {
+      "prometheus-mcp-stdio": {
+        "type": "stdio",
+        "command": "node",
+        "args": ["${workspaceFolder}/dist/mcp/prometheus-mcp-server.js"],
+        "env": {
+          "PROMETHEUS_URL":        "${env:PROMETHEUS_URL}",
+          "PROMETHEUS_TIMEOUT_MS": "10000",
+          "MCP_TRANSPORT":         "stdio",
+          "MAX_CONCURRENT":        "4",
+          "LOG_LEVEL":             "info"
+        }
+      },
+      "prometheus-mcp-docker": {
+        "type": "sse",
+        "url":    "http://localhost:3000/sse",
+        "rpcUrl": "http://localhost:3000/rpc"
+      }
+    }
+  },
+  "github.copilot.chat.agent.instructions": [
+    "${workspaceFolder}/.github/copilot-instructions.md"
+  ]
+}
